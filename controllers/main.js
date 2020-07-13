@@ -124,7 +124,7 @@ function deleteFile(doc_name) {
 }
 
 function getFileType(extension) {
-    let end_point = "http://localhost:5000/api/sloc/showIcon/";
+    let end_point = "https://sloc-app.herokuapp.com/api/sloc/showIcon/";
     switch (extension) {
         case ".js":
             return {
