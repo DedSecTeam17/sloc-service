@@ -25,15 +25,11 @@ upload = multer({
 
 function checkForType(cp, file) {
     console.log("CHECK ")
-    const type = /jpeg|png|jpg|gif|java|js|py|xml|html|css|dart/;
+    const type = /jpeg|png|jpg|gif|class|js|py|xml|html|css|dart/;
     const extname = type.test(path.extname(file.originalname).toLowerCase());
     const mimeType = type.test(file.mimetype);
 
-    if (extname && mimeType) {
-        cp(null, true);
-    } else {
-        cp('Error invalid file', false);
-    }
+    cp(null, true);
 }
 
 module.exports.uploadFile = (async (req, res, next) => {
