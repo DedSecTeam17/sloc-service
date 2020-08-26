@@ -2,6 +2,7 @@ const path = require('path');
 const multer = require('multer');
 var fs = require('fs');
 var sloc = require('sloc');
+const node_sloc = require('node-sloc')
 
 const storage = multer.diskStorage(
     {
@@ -43,6 +44,14 @@ module.exports.uploadFile = (async (req, res, next) => {
 
                 let full_file_path = req.file.filename.toString();
 
+                const options = {
+                    path: `./public/uploads/${full_file_path}`,                      // Required. The path to walk or file to read.
+                    extensions: ['java', 'js', 'html', 'css', 'dart'],   // Additional file extensions to look for. Required if ignoreDefault is set to true.
+                    ignorePaths: ['node_modules'],       // A list of directories to ignore.
+                    ignoreDefault: false,                // Whether to ignore the default file extensions or not
+                    logger: console.log,                 // Optional. Outputs extra information to if specified.
+                }
+
 
                 //now let process it using sloc keep the result
                 fs.readFile(`./public/uploads/${full_file_path}`, "utf8", async function (err, code) {
@@ -55,31 +64,46 @@ module.exports.uploadFile = (async (req, res, next) => {
                         for (i in sloc.keys) {
                             var k = sloc.keys[i];
                             console.log(k + " : " + stats[k]);
-                            response.push(
-                                {
-                                    "metric": k,
-                                    "value": stats[k]
-                                }
-                            )
+                            if (k !== "comment")
+                                response.push(
+                                    {
+                                        "metric": k,
+                                        "value": stats[k]
+                                    }
+                                )
                         }
 
-                        let file_extension = path.extname(`./public/uploads/${full_file_path}`)
-                        await deleteFile(full_file_path);
 
-                        sendJsonResponse(res, {
-                            "data": response,
-                            "mata_data": getFileType(file_extension)
-                        }, 200);
+                        node_sloc(options).then(async (data) => {
+                            console.log(data.paths, data.sloc.sloc, data.sloc.comments)
+
+                            response.push(
+                                {
+                                    "metric": "Comments",
+                                    "value": data.sloc.comments
+                                }
+                            )
+
+                            let file_extension = path.extname(`./public/uploads/${full_file_path}`)
+                            await deleteFile(full_file_path);
+
+                            sendJsonResponse(res, {
+                                "data": response,
+                                "mata_data": getFileType(file_extension)
+                            }, 200);
+
+                        }).catch(err => {
+                            console.log(err)
+                            sendJsonResponse(res, {
+                                "data": [],
+                                "mata_data": "err"
+                            }, 200);
+
+                        })
+
 
                     }
                 });
-
-
-                //delete file
-                //send response again
-
-
-                // sendJsonResponse(res, {"file": }, 200);
             }
         }
     );
